@@ -1,4 +1,4 @@
-Project UAP SDA Responsi 
+ikutProject UAP SDA Responsi 
 
 Kelas A 
 
@@ -8,7 +8,7 @@ Tema : Menejemen Peminjaman Buku
 
 Anggota :
 
-•Muhammad Zidane Dako (
+•Muhammad Zidane Dako (2357051005) 
 
 •Arjuna Gunatama Sihombing (
 

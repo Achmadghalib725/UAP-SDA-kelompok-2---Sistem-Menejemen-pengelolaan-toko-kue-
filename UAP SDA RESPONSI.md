@@ -1,4 +1,4 @@
-ikutProject UAP SDA Responsi 
+Project UAP SDA Responsi 
 
 Kelas A 
 

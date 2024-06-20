@@ -1,144 +1,244 @@
+import tkinter as tk
+from tkinter import messagebox
 import csv
 
-class Buku:
-    def __init__(self, id, judul, pengarang, deskripsi, harga_per_hari):
-        self.id = id
-        self.judul = judul
-        self.pengarang = pengarang
-        self.deskripsi = deskripsi
-        self.harga_per_hari = harga_per_hari
-
-    def __str__(self):
-        return f"{self.judul} oleh {self.pengarang}"
-
-class PeminjamanBuku:
+class Library:
     def __init__(self):
-        self.buku = []
-        self.antrian = []
-        self.pemesanan = []
-        self.transaksi = []
+        self.books = []
+        self.transactions = []
+        self.orders = []
+        self.load_data()
 
-    def tambah_buku(self, id, judul, pengarang, deskripsi, harga_per_hari):
-        buku_baru = Buku(id, judul, pengarang, deskripsi, harga_per_hari)
-        self.buku.append(buku_baru)
-        print("Buku berhasil ditambahkan.")
-
-    def simpan_buku_ke_csv(self, filename="buku.csv"):
-        with open(filename, mode='w', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow(["ID", "Judul", "Pengarang", "Deskripsi", "Harga Per Hari"])
-            for buku in self.buku:
-                writer.writerow([buku.id, buku.judul, buku.pengarang, buku.deskripsi, buku.harga_per_hari])
-        print(f"Data buku berhasil disimpan ke {filename}")
-
-    def muat_buku_dari_csv(self, filename="buku.csv"):
+    def load_data(self):
         try:
-            with open(filename, mode='r') as file:
+            with open('Promp csv.csv', 'r', newline='', encoding='utf-8-sig') as file:
                 reader = csv.reader(file)
-                next(reader)  # Skip header row
-                for row in reader:
-                    id, judul, pengarang, deskripsi, harga_per_hari = row
-                    self.tambah_buku(int(id), judul, pengarang, deskripsi, float(harga_per_hari))
-            print(f"Data buku berhasil dimuat dari {filename}")
+                self.books = list(reader)
         except FileNotFoundError:
-            print(f"File {filename} tidak ditemukan.")
+            self.books = []
 
-    def tampilkan_buku(self):
-        if not self.buku:
-            print("Tidak ada buku yang tersedia.")
-            return
-        print(f"{'ID':<5} {'Judul':<30} {'Pengarang':<20} {'Harga Per Hari':<15}")
-        print("="*70)
-        for buku in self.buku:
-            print(f"{buku.id:<5} {buku.judul:<30} {buku.pengarang:<20} Rp{buku.harga_per_hari:<15.2f}")
+        try:
+            with open('transactions.csv', 'r', newline='', encoding='utf-8-sig') as file:
+                reader = csv.reader(file)
+                self.transactions = list(reader)
+        except FileNotFoundError:
+            self.transactions = []
 
-    def pesan_buku(self, id_buku, durasi_peminjaman):
-        buku = self.cari_buku_berdasarkan_id(id_buku)
-        if buku:
-            total_harga = buku.harga_per_hari * durasi_peminjaman
-            pesanan = f"Pemesanan: {buku}, Durasi: {durasi_peminjaman} hari, Total Harga: Rp{total_harga:.2f}"
-            self.antrian.append((buku, durasi_peminjaman, total_harga))
-            self.pemesanan.append(pesanan)
-            print(pesanan)
+        try:
+            with open('orders.csv', 'r', newline='', encoding='utf-8-sig') as file:
+                reader = csv.reader(file)
+                self.orders = list(reader)
+        except FileNotFoundError:
+            self.orders = []
+
+    def save_data(self):
+        with open('Promp csv.csv', 'w', newline='', encoding='utf-8-sig') as file:
+            writer = csv.writer(file)
+            writer.writerows(self.books)
+
+        with open('transactions.csv', 'w', newline='', encoding='utf-8-sig') as file:
+            writer = csv.writer(file)
+            writer.writerows(self.transactions)
+
+        with open('orders.csv', 'w', newline='', encoding='utf-8-sig') as file:
+            writer = csv.writer(file)
+            writer.writerows(self.orders)
+
+    def add_book(self, book):
+        self.books.append(book)
+        self.save_data()
+
+    def remove_book(self, book):
+        if book in self.books:
+            self.books.remove(book)
+            self.save_data()
+            return True
         else:
-            print("Buku tidak ditemukan.")
+            return False
 
-    def proses_pemesanan(self):
-        if self.antrian:
-            buku, durasi_peminjaman, total_harga = self.antrian.pop(0)
-            transaksi = f"Transaksi: {buku}, Durasi: {durasi_peminjaman} hari, Total Harga: Rp{total_harga:.2f}"
-            self.transaksi.append(transaksi)
-            print(transaksi)
-        else:
-            print("Tidak ada pemesanan dalam antrian.")
-
-    def tampilkan_transaksi(self):
-        if not self.transaksi:
-            print("Tidak ada transaksi yang tersedia.")
-        for transaksi in self.transaksi:
-            print(transaksi)
-
-    def tampilkan_pemesanan(self):
-        if not self.pemesanan:
-            print("Tidak ada pemesanan yang tersedia.")
-        for pesanan in self.pemesanan:
-            print(pesanan)
-
-    def cari_buku_berdasarkan_id(self, id):
-        for buku in self.buku:
-            if buku.id == id:
-                return buku
+    def find_book(self, title):
+        for book in self.books:
+            if book[1].lower() == title.lower():  # Title is now the second element
+                return book
         return None
 
-def utama():
-    peminjaman = PeminjamanBuku()
-    while True:
-        print("\nSistem Peminjaman Buku:")
-        print("1. Tambah Buku")
-        print("2. Tampilkan Buku")
-        print("3. Pesan Buku")
-        print("4. Proses Pemesanan")
-        print("5. Lihat Transaksi")
-        print("6. Lihat Pemesanan")
-        print("7. Simpan Buku ke CSV")
-        print("8. Muat Buku dari CSV")
-        print("9. Keluar")
+    def order_book(self, book, user):
+        self.orders.append([book, user])
+        self.save_data()
 
-        pilihan = input("Masukkan pilihan Anda: ")
-        if pilihan == '1':
-            try:
-                id = int(input("Masukkan ID Buku: "))
-                judul = input("Masukkan Judul Buku: ")
-                pengarang = input("Masukkan Pengarang Buku: ")
-                deskripsi = input("Masukkan Deskripsi Buku: ")
-                harga_per_hari = float(input("Masukkan Harga Peminjaman Per Hari: "))
-                peminjaman.tambah_buku(id, judul, pengarang, deskripsi, harga_per_hari)
-            except ValueError:
-                print("Input tidak valid. Harap masukkan tipe data yang benar.")
-        elif pilihan == '2':
-            peminjaman.tampilkan_buku()
-        elif pilihan == '3':
-            try:
-                id_buku = int(input("Masukkan ID Buku untuk pemesanan: "))
-                durasi_peminjaman = int(input("Masukkan Durasi Peminjaman (hari): "))
-                peminjaman.pesan_buku(id_buku, durasi_peminjaman)
-            except ValueError:
-                print("Input tidak valid. Harap masukkan tipe data yang benar.")
-        elif pilihan == '4':
-            peminjaman.proses_pemesanan()
-        elif pilihan == '5':
-            peminjaman.tampilkan_transaksi()
-        elif pilihan == '6':
-            peminjaman.tampilkan_pemesanan()
-        elif pilihan == '7':
-            peminjaman.simpan_buku_ke_csv()
-        elif pilihan == '8':
-            peminjaman.muat_buku_dari_csv()
-        elif pilihan == '9':
-            break
+    def process_order(self, book, user):
+        if [book, user] in self.orders:
+            self.orders.remove([book, user])
+            self.transactions.append([book, user])
+            self.save_data()
+            return True
         else:
-            print("Pilihan tidak valid. Harap coba lagi.")
-        input("\nTekan Enter untuk melanjutkan...")
+            return False
 
-if __name__ == "__main__":
-    utama()
+    def get_transactions(self):
+        return self.transactions
+
+    def get_orders(self):
+        return self.orders
+
+    def get_books(self):
+        return self.books
+
+    def sort_books(self):
+        self.books.sort(key=lambda x: x[1].lower())  # Sort by title, which is the second element
+        self.save_data()
+
+
+class LibraryGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title('Library Management System')
+        self.root.geometry('800x600')  # Adjusted size to accommodate more columns
+
+        self.library = Library()
+
+        self.label_title = tk.Label(root, text='Library Management System', font=('Helvetica', 18, 'bold'))
+        self.label_title.pack(pady=10)
+
+        self.frame = tk.Frame(root)
+        self.frame.pack(pady=20)
+
+        self.label_instruction = tk.Label(self.frame, text='Enter book title:')
+        self.label_instruction.grid(row=0, column=0, padx=10)
+
+        self.entry_title = tk.Entry(self.frame, width=30)
+        self.entry_title.grid(row=0, column=1, padx=10)
+
+        self.button_search = tk.Button(self.frame, text='Search', command=self.search_book)
+        self.button_search.grid(row=0, column=2, padx=10)
+
+        self.label_books = tk.Label(root, text='Books:')
+        self.label_books.pack()
+
+        self.listbox_books = tk.Listbox(root, width=100, height=10)
+        self.listbox_books.pack(pady=10)
+
+        self.refresh_books()
+
+        self.button_add = tk.Button(root, text='Add Book', command=self.add_book)
+        self.button_add.pack()
+
+        self.button_remove = tk.Button(root, text='Remove Book', command=self.remove_book)
+        self.button_remove.pack()
+
+        self.label_orders = tk.Label(root, text='Orders:')
+        self.label_orders.pack()
+
+        self.listbox_orders = tk.Listbox(root, width=100, height=5)
+        self.listbox_orders.pack()
+
+        self.refresh_orders()
+
+        self.button_order = tk.Button(root, text='Order Book', command=self.order_book)
+        self.button_order.pack()
+
+        self.label_transactions = tk.Label(root, text='Transactions:')
+        self.label_transactions.pack()
+
+        self.listbox_transactions = tk.Listbox(root, width=100, height=5)
+        self.listbox_transactions.pack()
+
+        self.refresh_transactions()
+
+        self.button_process = tk.Button(root, text='Process Order', command=self.process_order)
+        self.button_process.pack()
+
+        self.button_refresh = tk.Button(root, text='Refresh', command=self.refresh_all)
+        self.button_refresh.pack(pady=10)
+
+        self.button_sort = tk.Button(root, text='Sort Books', command=self.sort_books)
+        self.button_sort.pack()
+
+    def search_book(self):
+        title = self.entry_title.get().strip()
+        book = self.library.find_book(title)
+        if book:
+            messagebox.showinfo('Book Found', f'Book found: {book[1]} - {book[2]}, {book[3]}, {book[4]} per day')
+        else:
+            messagebox.showinfo('Book Not Found', f'Book with title "{title}" not found.')
+
+    def add_book(self):
+        title = self.entry_title.get().strip()
+        if title:
+            # Add input fields for genre, author, and price per day
+            genre = 'Unknown'
+            author = 'Unknown'
+            price_per_day = '0'
+            book_id = str(len(self.library.get_books()) + 1)
+            book = [book_id, title, genre, author, price_per_day]
+            self.library.add_book(book)
+            self.refresh_books()
+            messagebox.showinfo('Book Added', f'Book added successfully: {title}')
+        else:
+            messagebox.showwarning('Empty Field', 'Please enter a book title.')
+
+    def remove_book(self):
+        title = self.entry_title.get().strip()
+        book = self.library.find_book(title)
+        if book:
+            self.library.remove_book(book)
+            self.refresh_books()
+            messagebox.showinfo('Book Removed', f'Book removed successfully: {title}')
+        else:
+            messagebox.showwarning('Book Not Found', f'Book with title "{title}" not found.')
+
+    def order_book(self):
+        title = self.entry_title.get().strip()
+        if title:
+            book = self.library.find_book(title)
+            if book:
+                self.library.order_book(title, 'User123')  # Hardcoded user for demonstration
+                self.refresh_orders()
+                messagebox.showinfo('Book Ordered', f'Book ordered successfully: {title}')
+            else:
+                messagebox.showwarning('Book Not Found', f'Book with title "{title}" not found.')
+        else:
+            messagebox.showwarning('Empty Field', 'Please enter a book title.')
+
+    def process_order(self):
+        title = self.entry_title.get().strip()
+        if title:
+            success = self.library.process_order(title, 'User123')  # Hardcoded user for demonstration
+            if success:
+                self.refresh_orders()
+                self.refresh_transactions()
+                messagebox.showinfo('Order Processed', f'Order processed successfully: {title}')
+            else:
+                messagebox.showwarning('Order Not Found', f'Order for book "{title}" not found.')
+        else:
+            messagebox.showwarning('Empty Field', 'Please enter a book title.')
+
+    def refresh_books(self):
+        self.listbox_books.delete(0, tk.END)
+        for book in self.library.get_books():
+            self.listbox_books.insert(tk.END, f'{book[0]} - {book[1]}, {book[2]}, {book[3]}, {book[4]} per day')
+
+    def refresh_orders(self):
+        self.listbox_orders.delete(0, tk.END)
+        for order in self.library.get_orders():
+            self.listbox_orders.insert(tk.END, f'{order[0]} - {order[1]}')
+
+    def refresh_transactions(self):
+        self.listbox_transactions.delete(0, tk.END)
+        for transaction in self.library.get_transactions():
+            self.listbox_transactions.insert(tk.END, f'{transaction[0]} - {transaction[1]}')
+
+    def refresh_all(self):
+        self.refresh_books()
+        self.refresh_orders()
+        self.refresh_transactions()
+
+    def sort_books(self):
+        self.library.sort_books()
+        self.refresh_books()
+
+
+if __name__ == '__main__':
+    root = tk.Tk()
+    app = LibraryGUI(root)
+    root.mainloop()
